@@ -69,10 +69,47 @@ void tworzenieSuwakowHSV() {
 	createTrackbar("Nasycenie_MIN", suwakiHSV, &Nasycenie_MIN, 255, przesuwanie);
 	createTrackbar("Wartosc_MIN", suwakiHSV, &Wartosc_MIN, 255, przesuwanie);
 	createTrackbar("Wartosc_MIN", suwakiHSV, &Wartosc_MIN, 255, przesuwanie);
-
-
-
-
-
-	
 }
+
+void NacisnijIPrzeciagnij_prostokat(int zdarzenie, int x, int y, int flagi, void* param) {
+
+	if (Tryb_kalibracji = true) {
+
+		Mat* kanalVideo = (Mat*)param;
+
+		if (zdarzenie == CV_EVENT_LBUTTONDOWN && Przeciaganie_myszy == false)
+		{
+			Poczatkowe_klikniecie = cv::Point(x, y);
+
+			Przeciaganie_myszy = true;
+		}
+
+		if (zdarzenie == CV_EVENT_MOUSEMOVE && Przeciaganie_myszy == true)
+		{
+			Obecna_pozycja_myszy = cv::Point(x, y);
+
+			Ruszenie_myszy = true;
+		}
+
+		if (zdarzenie == CV_EVENT_LBUTTONUP && Przeciaganie_myszy == true)
+		{
+			prostokatROI = Rect(Poczatkowe_klikniecie, Obecna_pozycja_myszy);
+
+
+			Przeciaganie_myszy = false;
+			Ruszenie_myszy = false;
+			Prostokat = true;
+		}
+
+		if (zdarzenie == CV_EVENT_RBUTTONDOWN) {
+
+			Odcien_MIN = 0;
+			Odcien_MAX = 255;
+			Nasycenie_MIN = 0;
+			Nasycenie_MAX = 255;
+			Wartosc_MIN = 0;
+			Wartosc_MAX = 255;
+		}
+	}
+}
+
