@@ -4,6 +4,8 @@
 #include <opencv/cv.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include<opencv2/imgproc/imgproc.hpp> //prostokat
+
 
 
 using namespace cv;
@@ -112,4 +114,67 @@ void NacisnijIPrzeciagnij_prostokat(int zdarzenie, int x, int y, int flagi, void
 		}
 	}
 }
+void zapiszWartosci_HSV(cv::Mat rama, cv::Mat rama_hsv) {
+	
+	if (Ruszenie_myszy == false && Prostokat == true) {
+
+		if (Odcien_ROI.size() > 0) Odcien_ROI.clear();
+		if (Nasycenie_ROI.size() > 0) Nasycenie_ROI.clear();
+		if (Wartosc_ROI.size() > 0) Wartosc_ROI.clear();
+
+		if (prostokatROI.width < 1 || prostokatROI.height < 1) cout << "Proszê narysowaæ prostok¹t , nie linie " << endl;
+		else {
+			for (int k = prostokatROI.x; k < prostokatROI.x + prostokatROI.width; k++) {
+				for (int p = prostokatROI.y; p < prostokatROI.y + prostokatROI.height; p++) {
+
+					Odcien_ROI.push_back((int)rama_hsv.at<cv::Vec3b>(p, k)[0]);
+					Nasycenie_ROI.push_back((int)rama_hsv.at<cv::Vec3b>(p, k)[1]);
+					Wartosc_ROI.push_back((int)rama_hsv.at<cv::Vec3b>(p, k)[2]);
+				}
+			}
+		}
+
+
+		Prostokat = false;
+
+		if (Odcien_ROI.size() > 0) {
+
+			Odcien_MIN = *std::min_element(Odcien_ROI.begin(), Odcien_ROI.end());
+			Odcien_MAX = *std::max_element(Odcien_ROI.begin(), Odcien_ROI.end());
+
+			cout << "Wartosc 'MIN' Odcienia:  " << Odcien_MIN << endl;
+			cout << "Wartosc 'MAX' Odcienia:  " << Odcien_MAX << endl;
+		}
+
+		if (Nasycenie_ROI.size() > 0) {
+
+			Nasycenie_MIN = *std::min_element(Nasycenie_ROI.begin(), Nasycenie_ROI.end());
+			Nasycenie_MAX = *std::max_element(Nasycenie_ROI.begin(), Nasycenie_ROI.end());
+
+			cout << "Wartosc 'MIN' Nasycenia:  " << Nasycenie_MIN << endl;
+			cout << "Wartosc 'MAX' Nasycenia:  " << Nasycenie_MAX << endl;
+		}
+
+		if (Wartosc_ROI.size() > 0) {
+
+			Wartosc_MIN = *std::min_element(Wartosc_ROI.begin(), Wartosc_ROI.end());
+			Wartosc_MAX = *std::max_element(Wartosc_ROI.begin(), Wartosc_ROI.end());
+
+			cout << "Wartosc 'MIN' Wartosci:  " << Wartosc_MIN << endl;
+			cout << "Wartosc 'MMAX' Wartosci:  " << Wartosc_MAX << endl;
+		}
+
+
+	}
+
+
+	if (Ruszenie_myszy == true) {
+
+		rectangle(rama, Poczatkowe_klikniecie, cv::Point(Obecna_pozycja_myszy.x, Obecna_pozycja_myszy.y), cv::Scalar(0, 255, 0), 1, 8, 0);
+
+		}
+
+
+}
+
 
