@@ -174,7 +174,15 @@ void zapiszWartosci_HSV(cv::Mat rama, cv::Mat rama_hsv) {
 
 		}
 
-
 }
+
+string intNaString(int numer) {
+
+	std::stringstream nn;
+	nn << numer;
+	return nn.str();
+}
+
+
 
 
