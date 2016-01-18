@@ -183,6 +183,37 @@ string intNaString(int numer) {
 	return nn.str();
 }
 
+void narysujObiekt(int x, int y, Mat &rama) {
+
+
+}
+
+void TransformacjeMorph(Mat &thresh) {
+
+
+	Mat ErodowacElement = getStructuringElement(MORPH_RECT, Size(3, 3));
+
+	Mat RozszerzacElement = getStructuringElement(MORPH_RECT, Size(8, 8));
+
+	erode(thresh, thresh, ErodowacElement);
+	erode(thresh, thresh, ErodowacElement);
+
+	dilate(thresh, thresh, RozszerzacElement);
+	dilate(thresh, thresh, RozszerzacElement);
+
+}
 
 
 
+
+
+
+
+
+
+
+
+int main(int argc, char* argv[])
+{
+
+}
