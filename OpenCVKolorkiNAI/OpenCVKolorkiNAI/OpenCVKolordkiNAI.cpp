@@ -22,7 +22,7 @@ int Wartosc_MAX = 256;
 const int Wysokosc_ramy = 480;
 const int Szerokosc_ramy = 640;
 
-const int MAX_wykryte_obiekty = 50;
+const int MAX_liczba_obiektow = 50;
 
 const int MIN_powierzchnia_obiektu = 15 * 15;
 const int MAX_powierzchnia_obiektu = Wysokosc_ramy * Szerokosc_ramy / 2;
@@ -203,14 +203,61 @@ void TransformacjeMorph(Mat &thresh) {
 
 }
 
+void SledzenieFiltrowanegoObiektu(int &x, int &y, Mat prog, Mat &KanalKamery)
+{
 
+	Mat temp;
+	prog.copyTo(temp);
 
+	vector< vector<Point > > kontury;
+	vector<Vec4i> hierarchia;
 
+	findContours(temp, kontury, hierarchia, CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE);
 
+	double refObszar = 0;
+	int najwiekszyIndeks = 0;
+	bool obiektZnaleziony = false;
 
+	if (hierarchia.size() > 0) {
 
+		int liczbaObiektow = hierarchia.size();
 
+		if (liczbaObiektow < MAX_liczba_obiektow) {
 
+			for (int index = 0; index >= 0; index = hierarchia[index][0]) {
+
+				Moments moment = moments((cv::Mat)kontury[index]);
+
+				double obszar = moment.m00;
+
+				if (obszar > MIN_powierzchnia_obiektu && obszar < MAX_powierzchnia_obiektu && obszar > refObszar)
+				{
+					x = moment.m10 / obszar;
+					y = moment.m01 / obszar;
+
+					obiektZnaleziony = true;
+
+					refObszar = obszar;
+
+					najwiekszyIndeks = index;
+				}
+				else obiektZnaleziony = false;
+
+			}
+
+			if (obiektZnaleziony == true)
+			{
+				putText(KanalKamery, "SledzenieObiektu", Point(0, 50), 2, 1, Scalar(0, 255, 0), 2);
+
+				narysujObiekt(x, y, KanalKamery);
+
+			}
+		}
+
+		else putText(KanalKamery, "Zbyt Duzo Halasu !! Zreguluj Filtr", Point(0, 50), 1, 2, Scalar(0, 0, 255), 2);
+
+	}
+}
 
 
 int main(int argc, char* argv[])
