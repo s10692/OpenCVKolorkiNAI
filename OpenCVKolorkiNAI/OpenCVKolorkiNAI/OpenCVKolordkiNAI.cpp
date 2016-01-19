@@ -263,4 +263,24 @@ void SledzenieFiltrowanegoObiektu(int &x, int &y, Mat prog, Mat &KanalKamery)
 int main(int argc, char* argv[])
 {
 
+	bool sledzObiekt = true;
+	bool uzyjTransformacjeMorph = true;
+
+
+	Tryb_kalibracji = true;
+
+	Mat KanalKamery;
+
+	Mat HSV;
+
+	Mat prog;
+
+	int x = 0;
+	int y = 0;
+
+	VideoCapture przejmij;
+
+
+
+	
 }
