@@ -280,7 +280,54 @@ int main(int argc, char* argv[])
 
 	VideoCapture przejmij;
 
+	przejmij.open();
 
+	przejmij.set(CV_CAP_PROP_FRAME_WIDTH, Szerokosc_ramy);
+	przejmij.set(CV_CAP_PROP_FRAME_HEIGHT, Wysokosc_ramy);
+
+	cv::namedWindow(okno);
+
+	cv::setMouseCallback(okno, NacisnijIPrzeciagnij_prostokat, &KanalKamery);
+
+	Przeciaganie_myszy = false;
+	Ruszenie_myszy = false;
+	Prostokat = false;
+
+	while (1)
+	{
+
+		przejmij.read(KanalKamery);
+
+		cvtColor(KanalKamery, HSV, COLOR_BGR2HSV);
+
+		zapiszWartosci_HSV(KanalKamery, HSV);
+		
+		inRange(HSV, Scalar(Odcien_MIN, Nasycenie_MIN, Wartosc_MIN), Scalar(Odcien_MAX, Nasycenie_MAX, Wartosc_MAX), prog);
+
+		if (uzyjTransformacjeMorph)
+			SledzenieFiltrowanegoObiektu(x, y, prog, KanalKamery);
+
+		if (Tryb_kalibracji == true)
+		{
+
+			tworzenieSuwakowHSV();
+			imshow(okno1, HSV);
+			imshow(okno2, prog);
+		}
+		else
+		{
+			destroyWindow(okno1);
+			destroyWindow(okno2);
+			destroyWindow(suwakiHSV);
+		}
+
+		imshow(okno, KanalKamery);
+
+
+		if (waitKey(30) == 99) Tryb_kalibracji = !Tryb_kalibracji;
+	}
 
 	
+
+	return 0;
 }
