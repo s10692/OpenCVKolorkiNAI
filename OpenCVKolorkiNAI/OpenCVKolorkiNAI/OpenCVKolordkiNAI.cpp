@@ -191,11 +191,14 @@ void narysujObiekt(int x, int y, Mat &rama , vector< vector<Point> > kontury, ve
 		if (abs(contourArea(Mat(kontury[i]))) > max)
 		{
 			max = abs(contourArea(Mat(kontury[i])));
+			drawContours(rama, kontury, i, Scalar(255, 0, 0), 3, 8, hierarchia, 0, Point());
 		}
-	if (i_cont >= 0)
-		for (int i = 0; i< kontury.size(); i++)
-			drawContours(rama, kontury, i, Scalar(255, 0, 179), 2, 8, hierarchia, 0, Point());
+
+
+
+
 	putText(rama, intNaString(x) + "," + intNaString(y), Point(x, y + 30), 1, 1, Scalar(255, 0, 0), 2);
+
 
 }
 
