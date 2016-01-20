@@ -24,8 +24,8 @@ const int Szerokosc_ramy = 640;
 
 const int MAX_liczba_obiektow = 50;
 
-const int MIN_powierzchnia_obiektu = 15 * 15;
-const int MAX_powierzchnia_obiektu = Wysokosc_ramy * Szerokosc_ramy / 2;
+const int MIN_powierzchnia_obiektu = 20 * 20;
+const int MAX_powierzchnia_obiektu = Wysokosc_ramy * Szerokosc_ramy / 1.5;
 
 
 const string okno = "Oryginalny Obraz";
@@ -66,11 +66,11 @@ void tworzenieSuwakowHSV() {
 
 
 	createTrackbar("Odcien_MIN", suwakiHSV, &Odcien_MIN, 255, przesuwanie);
-	createTrackbar("Odcien_MAX", suwakiHSV, &Odcien_MIN, 255, przesuwanie);
+	createTrackbar("Odcien_MAX", suwakiHSV, &Odcien_MAX, 255, przesuwanie);
 	createTrackbar("Nasycenie_MIN", suwakiHSV, &Nasycenie_MIN, 255, przesuwanie);
-	createTrackbar("Nasycenie_MIN", suwakiHSV, &Nasycenie_MIN, 255, przesuwanie);
+	createTrackbar("Nasycenie_MAX", suwakiHSV, &Nasycenie_MAX, 255, przesuwanie);
 	createTrackbar("Wartosc_MIN", suwakiHSV, &Wartosc_MIN, 255, przesuwanie);
-	createTrackbar("Wartosc_MIN", suwakiHSV, &Wartosc_MIN, 255, przesuwanie);
+	createTrackbar("Wartosc_MAX", suwakiHSV, &Wartosc_MAX, 255, przesuwanie);
 }
 
 void NacisnijIPrzeciagnij_prostokat(int zdarzenie, int x, int y, int flagi, void* param) {
@@ -161,7 +161,7 @@ void zapiszWartosci_HSV(cv::Mat rama, cv::Mat rama_hsv) {
 			Wartosc_MAX = *std::max_element(Wartosc_ROI.begin(), Wartosc_ROI.end());
 
 			cout << "Wartosc 'MIN' Wartosci:  " << Wartosc_MIN << endl;
-			cout << "Wartosc 'MMAX' Wartosci:  " << Wartosc_MAX << endl;
+			cout << "Wartosc 'MAX' Wartosci:  " << Wartosc_MAX << endl;
 		}
 
 
@@ -183,8 +183,19 @@ string intNaString(int numer) {
 	return nn.str();
 }
 
-void narysujObiekt(int x, int y, Mat &rama) {
+void narysujObiekt(int x, int y, Mat &rama , vector< vector<Point> > kontury, vector<Vec4i> hierarchia) {
+	
+	int max = 0; int i_cont = -1;
 
+	for (int i = 0; i < kontury.size(); i ++)
+		if (abs(contourArea(Mat(kontury[i]))) > max)
+		{
+			max = abs(contourArea(Mat(kontury[i])));
+		}
+	if (i_cont >= 0)
+		for (int i = 0; i< kontury.size(); i++)
+			drawContours(rama, kontury, i, Scalar(255, 0, 179), 2, 8, hierarchia, 0, Point());
+	putText(rama, intNaString(x) + "," + intNaString(y), Point(x, y + 30), 1, 1, Scalar(255, 0, 0), 2);
 
 }
 
@@ -249,7 +260,7 @@ void SledzenieFiltrowanegoObiektu(int &x, int &y, Mat prog, Mat &KanalKamery)
 			{
 				putText(KanalKamery, "SledzenieObiektu", Point(0, 50), 2, 1, Scalar(0, 255, 0), 2);
 
-				narysujObiekt(x, y, KanalKamery);
+				narysujObiekt(x, y, KanalKamery , kontury, hierarchia);
 
 			}
 		}
@@ -280,7 +291,7 @@ int main(int argc, char* argv[])
 
 	VideoCapture przejmij;
 
-	przejmij.open();
+	przejmij.open(0);
 
 	przejmij.set(CV_CAP_PROP_FRAME_WIDTH, Szerokosc_ramy);
 	przejmij.set(CV_CAP_PROP_FRAME_HEIGHT, Wysokosc_ramy);
