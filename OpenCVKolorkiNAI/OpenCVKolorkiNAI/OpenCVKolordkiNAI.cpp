@@ -12,21 +12,26 @@ using namespace cv;
 using namespace std;
 //pocz¹tkowa wartoœæ minimalna i maksymalna filtrów HSV.
 //bêd¹ zmieniane za pomoc¹ potencjometru(okno suwakiHSV).
-int Odcien_MIN = 0;
-int Odcien_MAX = 256;
+int Barwa_MIN = 0;
+int Barwa_MAX = 256;
 int Nasycenie_MIN = 0;
 int Nasycenie_MAX = 256;
 int Wartosc_MIN = 0;
 int Wartosc_MAX = 256;
 
-//domyœlna szerokoœæ i wysokoœæ.
+
+int Czerwony = 0;
+int Zielony = 0;
+int Niebieski = 0;
+
+//domyœlna szerokoœæ i wysokoœæ ramy (okna)
 const int Wysokosc_ramy = 480;
 const int Szerokosc_ramy = 640;
 
 //maksymalna liczba obiektów , które maj¹ byæ wykrywane w ramce.
-const int MAX_liczba_obiektow = 50;
+const int MAX_liczba_obiektow = 200;
 //minimalna i maksymalna powierzchnia obiektu.
-const int MIN_powierzchnia_obiektu = 20 * 20;
+const int MIN_powierzchnia_obiektu = 10 * 10;
 const int MAX_powierzchnia_obiektu = Wysokosc_ramy * Szerokosc_ramy / 1.5;   //480 * 426,666
 
 //nazwy które bêd¹ wyœwietlane na górze ka¿dego okna.
@@ -48,11 +53,14 @@ cv::Point Poczatkowe_klikniecie, Obecna_pozycja_myszy;
 //rejon który u¿ytkownik wybra³.
 cv::Rect prostokatROI;
 //wartoœæ HSV z regionu który wybra³ u¿ytkownik, przechowywane w osobnych wektorach aby by³a mo¿liwoœæ ³atwego ich posortowania
-vector<int> Odcien_ROI, Nasycenie_ROI, Wartosc_ROI;
+vector<int> Barwa_ROI, Nasycenie_ROI, Wartosc_ROI;
+vector<int> Czerwony_ROI, Zielony_ROI, Niebieski_ROI;
 
-void przesuwanie(int, void*)
-{
-	//Bêdzie uzupe³niane.
+string intNaString(int numer) {
+	//zamina int Na String
+	std::stringstream nn;
+	nn << numer;
+	return nn.str();
 }
 
 //Tworzenie okna potencjometru (suwakiHSV).
@@ -62,25 +70,23 @@ void tworzenieSuwakowHSV() {
 	//tworzenie pamiêci do przechowywania nazw w potencjometrze.
 	char Nazwa_suwakow[50];
 
-	sprintf(Nazwa_suwakow, "Odcien_MIN", Odcien_MIN);
-	sprintf(Nazwa_suwakow, "Odcien_MAX", Odcien_MAX);
+	sprintf(Nazwa_suwakow, "Barwa_MIN", Barwa_MIN);
+	sprintf(Nazwa_suwakow, "Barwa_MAX", Barwa_MAX);
 	sprintf(Nazwa_suwakow, "Nasycenie_MIN", Nasycenie_MIN);
 	sprintf(Nazwa_suwakow, "Nasycenie_MAX", Nasycenie_MIN);
 	sprintf(Nazwa_suwakow, "Wartosc_MIN", Wartosc_MIN);
 	sprintf(Nazwa_suwakow, "wartosc_MAX", Wartosc_MIN);
 
 	//tworzenie potencjonometru i wstawienie ich do okna
-	//3 parametry : adres ziennej która siê zmienia
-	//Maksymalna wartoœæ (np. Odcien_MAX)
-	//przesuwanie - funkcja która jest wy³owywana kiedy suwaki s¹ przesuwane
 
-	createTrackbar("Odcien_MIN", suwakiHSV, &Odcien_MIN, 255, przesuwanie);
-	createTrackbar("Odcien_MAX", suwakiHSV, &Odcien_MAX, 255, przesuwanie);
-	createTrackbar("Nasycenie_MIN", suwakiHSV, &Nasycenie_MIN, 255, przesuwanie);
-	createTrackbar("Nasycenie_MAX", suwakiHSV, &Nasycenie_MAX, 255, przesuwanie);
-	createTrackbar("Wartosc_MIN", suwakiHSV, &Wartosc_MIN, 255, przesuwanie);
-	createTrackbar("Wartosc_MAX", suwakiHSV, &Wartosc_MAX, 255, przesuwanie);
+	createTrackbar("Barwa_MIN", suwakiHSV, &Barwa_MIN, 255, NULL);
+	createTrackbar("Barwa_MAX", suwakiHSV, &Barwa_MAX, 255, NULL);
+	createTrackbar("Nasycenie_MIN", suwakiHSV, &Nasycenie_MIN, 255, NULL);
+	createTrackbar("Nasycenie_MAX", suwakiHSV, &Nasycenie_MAX, 255, NULL);
+	createTrackbar("Wartosc_MIN", suwakiHSV, &Wartosc_MIN, 255, NULL);
+	createTrackbar("Wartosc_MAX", suwakiHSV, &Wartosc_MAX, 255, NULL);
 }
+
 
 void NacisnijIPrzeciagnij_prostokat(int zdarzenie, int x, int y, int flagi, void* param) {
 	//je¿eli tryb kalibracji jest prawd¹ , bêdziemy korzystaæ z myszy aby zmieniæ wartoœci HSV
@@ -120,8 +126,8 @@ void NacisnijIPrzeciagnij_prostokat(int zdarzenie, int x, int y, int flagi, void
 		if (zdarzenie == CV_EVENT_RBUTTONDOWN) {
 			//Gdy u¿ytkownik kliknie rawy przycisk myszy 
 			//Resetuje wartoœci HSV
-			Odcien_MIN = 0;
-			Odcien_MAX = 255;
+			Barwa_MIN = 0;
+			Barwa_MAX = 255;
 			Nasycenie_MIN = 0;
 			Nasycenie_MAX = 255;
 			Wartosc_MIN = 0;
@@ -129,6 +135,55 @@ void NacisnijIPrzeciagnij_prostokat(int zdarzenie, int x, int y, int flagi, void
 		}
 	}
 }
+
+void zapiszWartosc_BGR(cv::Mat rama, cv::Mat rama_bgr) {
+
+	if (Ruszenie_myszy == true) {
+		//je¿eli mysz jest wciœniêta , rysujemy prostok¹t na ekranie i klikniêcie
+		rectangle(rama, Poczatkowe_klikniecie, cv::Point(Obecna_pozycja_myszy.x, Obecna_pozycja_myszy.y), cv::Scalar(0, 255, 0), 1, 8, 0);
+
+	}
+
+	if (Ruszenie_myszy == false && Prostokat == true) {
+		//czyszczenie poprzednich wartoœci wektora
+		if (Czerwony_ROI.size() > 0) Czerwony_ROI.clear();
+		if (Zielony_ROI.size() > 0) Zielony_ROI.clear();
+		if (Niebieski_ROI.size() > 0) Niebieski_ROI.clear();
+		//je¿eli uzytkownik przeci¹gnie tylko linie to nie znajdzie z wybranego obszaru wysokoœci ani szerokoœci i wyœliwetli b³¹d
+		if (prostokatROI.width < 1 || prostokatROI.height < 1) cout << "Proszê narysowaæ prostok¹t , nie linie " << endl;
+		else {
+			for (int k = prostokatROI.x; k < prostokatROI.x + prostokatROI.width; k++) {
+				for (int p = prostokatROI.y; p < prostokatROI.y + prostokatROI.height; p++) {
+					//zapisanie wartoœci HSV w tym momencie.
+					Czerwony_ROI.push_back((int)rama_bgr.at<cv::Vec3b>(p, k)[0]);
+					Zielony_ROI.push_back((int)rama_bgr.at<cv::Vec3b>(p, k)[1]);
+					Niebieski_ROI.push_back((int)rama_bgr.at<cv::Vec3b>(p, k)[2]);
+				}
+			}
+		}
+
+		if (Czerwony_ROI.size() > 0) {
+
+			Czerwony = *std::max_element(Czerwony_ROI.begin(), Czerwony_ROI.end());
+		}
+
+		if (Zielony_ROI.size() > 0) {
+
+			Zielony = *std::max_element(Zielony_ROI.begin(), Zielony_ROI.end());
+
+		}
+
+		if (Niebieski_ROI.size() > 0) {
+
+			Niebieski = *std::max_element(Niebieski_ROI.begin(), Niebieski_ROI.end());
+
+		}
+
+	}
+
+
+}
+
 
 //Zapisanie wartoœci HSV wybranego obszaru do wektora
 void zapiszWartosci_HSV(cv::Mat rama, cv::Mat rama_hsv) {
@@ -142,7 +197,7 @@ void zapiszWartosci_HSV(cv::Mat rama, cv::Mat rama_hsv) {
 	
 	if (Ruszenie_myszy == false && Prostokat == true) {
 		//czyszczenie poprzednich wartoœci wektora
-		if (Odcien_ROI.size() > 0) Odcien_ROI.clear();
+		if (Barwa_ROI.size() > 0) Barwa_ROI.clear();
 		if (Nasycenie_ROI.size() > 0) Nasycenie_ROI.clear();
 		if (Wartosc_ROI.size() > 0) Wartosc_ROI.clear();
 		//je¿eli uzytkownik przeci¹gnie tylko linie to nie znajdzie z wybranego obszaru wysokoœci ani szerokoœci i wyœliwetli b³¹d
@@ -151,7 +206,7 @@ void zapiszWartosci_HSV(cv::Mat rama, cv::Mat rama_hsv) {
 			for (int k = prostokatROI.x; k < prostokatROI.x + prostokatROI.width; k++) {
 				for (int p = prostokatROI.y; p < prostokatROI.y + prostokatROI.height; p++) {
 					//zapisanie wartoœci HSV w tym momencie.
-					Odcien_ROI.push_back((int)rama_hsv.at<cv::Vec3b>(p, k)[0]);
+					Barwa_ROI.push_back((int)rama_hsv.at<cv::Vec3b>(p, k)[0]);
 					Nasycenie_ROI.push_back((int)rama_hsv.at<cv::Vec3b>(p, k)[1]);
 					Wartosc_ROI.push_back((int)rama_hsv.at<cv::Vec3b>(p, k)[2]);
 				}
@@ -161,13 +216,13 @@ void zapiszWartosci_HSV(cv::Mat rama, cv::Mat rama_hsv) {
 		//resetowanie wybranego prostok¹ta , wiêc w razie potrzeby u¿ytkownik mo¿e wybraæ inny region.
 		Prostokat = false;
 		//ustawienie minimalnej i maksymalnej wartoœci od minimalnego i maksymalnego elementu ka¿dej tablicy. 
-		if (Odcien_ROI.size() > 0) {
+		if (Barwa_ROI.size() > 0) {
 
-			Odcien_MIN = *std::min_element(Odcien_ROI.begin(), Odcien_ROI.end());
-			Odcien_MAX = *std::max_element(Odcien_ROI.begin(), Odcien_ROI.end());
+			Barwa_MIN = *std::min_element(Barwa_ROI.begin(), Barwa_ROI.end());
+			Barwa_MAX = *std::max_element(Barwa_ROI.begin(), Barwa_ROI.end());
 
-			cout << "Wartosc 'MIN' Odcienia:  " << Odcien_MIN << endl;
-			cout << "Wartosc 'MAX' Odcienia:  " << Odcien_MAX << endl;
+			cout << "Wartosc 'MIN' Barwy:  " << Barwa_MIN << endl;
+			cout << "Wartosc 'MAX' Barwy:  " << Barwa_MAX << endl;
 		}
 
 		if (Nasycenie_ROI.size() > 0) {
@@ -194,12 +249,6 @@ void zapiszWartosci_HSV(cv::Mat rama, cv::Mat rama_hsv) {
 
 }
 
-string intNaString(int numer) {
-	//zamina int Na String
-	std::stringstream nn;
-	nn << numer;
-	return nn.str();
-}
 
 void narysujObiekt(int x, int y, Mat &rama , vector< vector<Point> > kontury, vector<Vec4i> hierarchia) {
 	
@@ -211,13 +260,14 @@ void narysujObiekt(int x, int y, Mat &rama , vector< vector<Point> > kontury, ve
 		if (abs(contourArea(Mat(kontury[i]))) > max)
 		{
 			max = abs(contourArea(Mat(kontury[i])));
-			drawContours(rama, kontury, i, Scalar(255, 0, 0), 3, 8, hierarchia, 0, Point());
+
+			drawContours(rama, kontury, i, Scalar(Czerwony,Zielony,Niebieski), 3, 8, hierarchia, 0, Point());
 		}
 
 
 
 	//Wypisanie na ekranie pozycji zaznaczonego obiektu.
-	putText(rama, intNaString(x) + "," + intNaString(y), Point(x, y + 30), 1, 1, Scalar(255, 0, 0), 2);
+	putText(rama, intNaString(x) + "," + intNaString(y), Point(x, y + 30), 1, 1, Scalar(0, 0, 255), 2);
 
 
 }
@@ -230,6 +280,8 @@ void TransformacjeMorph(Mat &thresh) {
 	//Rozszerzenie wiêkszego elementu aby by³o pewne ¿e obiekt jest dobrze widoczny.
 	Mat RozszerzacElement = getStructuringElement(MORPH_RECT, Size(8, 8));
 
+
+	//funkcja ta powoduje przefiltrowanie naszego obrazka z zastosowaniem filtru erozji
 	erode(thresh, thresh, ErodowacElement);
 	erode(thresh, thresh, ErodowacElement);
 
@@ -287,7 +339,7 @@ void SledzenieFiltrowanegoObiektu(int &x, int &y, Mat prog, Mat &KanalKamery)
 			//niech u¿ytkownik wie ¿e znalaz³ obiekt
 			if (obiektZnaleziony == true)
 			{
-				putText(KanalKamery, "SledzenieObiektu", Point(0, 50), 2, 1, Scalar(0, 255, 0), 2);
+				putText(KanalKamery, "Obiekt Znaleziony", Point(0, 50), 2, 1, Scalar(0, 255, 0), 2);
 				//narysuj lokalizacjê obiektu na ekranie.
 				narysujObiekt(x, y, KanalKamery , kontury, hierarchia);
 
@@ -308,6 +360,8 @@ int main(int argc, char* argv[])
 
 
 	Tryb_kalibracji = true;
+
+	Mat BGR;
 	//Matrix do przechowywania ka¿dej klatki kamery
 	Mat KanalKamery;
 	//Matrix to przechowywania obrazu HSV
@@ -327,7 +381,6 @@ int main(int argc, char* argv[])
 	//tworzenie okna.
 	cv::namedWindow(okno);
 	//ustaw wywo³anie funkcji myszy w oknie "KanalKamery".
-	//
 	cv::setMouseCallback(okno, NacisnijIPrzeciagnij_prostokat, &KanalKamery);
 	//inicjalizacja ruchu myszy i ustawienie na false.
 	Przeciaganie_myszy = false;
@@ -339,12 +392,14 @@ int main(int argc, char* argv[])
 	{
 		//sklepienie obrazu do matrix.
 		przejmij.read(KanalKamery);
+		cvtColor(KanalKamery, BGR, CV_BGR2Luv);
+		zapiszWartosc_BGR(KanalKamery, BGR);
 		//konwersja ramki z BGR do HSV.
 		cvtColor(KanalKamery, HSV, COLOR_BGR2HSV);
 		//ustawienie wartoœci HSV z wybranego przez u¿ytkownika regionu.
 		zapiszWartosci_HSV(KanalKamery, HSV);
 		//filtrowanie HSV miêdzy wartoœciami i filtrowanym obiektem.
-		inRange(HSV, Scalar(Odcien_MIN, Nasycenie_MIN, Wartosc_MIN), Scalar(Odcien_MAX, Nasycenie_MAX, Wartosc_MAX), prog);
+		inRange(HSV, Scalar(Barwa_MIN, Nasycenie_MIN, Wartosc_MIN), Scalar(Barwa_MAX, Nasycenie_MAX, Wartosc_MAX), prog);
 		//wykonywanie operacji morfologicznych na progowym obrazie w celu wyeliminowania zak³uceñ
 		//i podkreœlaj¹ filtrowany obiekt
 		if (uzyjTransformacjeMorph)
