@@ -154,7 +154,7 @@ void zapiszWartosc_BGR(cv::Mat rama, cv::Mat rama_bgr) {
 		else {
 			for (int k = prostokatROI.x; k < prostokatROI.x + prostokatROI.width; k++) {
 				for (int p = prostokatROI.y; p < prostokatROI.y + prostokatROI.height; p++) {
-					//zapisanie wartoœci HSV w tym momencie.
+					//zapisanie wartoœci BGR w tym momencie.
 					Czerwony_ROI.push_back((int)rama_bgr.at<cv::Vec3b>(p, k)[0]);
 					Zielony_ROI.push_back((int)rama_bgr.at<cv::Vec3b>(p, k)[1]);
 					Niebieski_ROI.push_back((int)rama_bgr.at<cv::Vec3b>(p, k)[2]);
@@ -164,7 +164,7 @@ void zapiszWartosc_BGR(cv::Mat rama, cv::Mat rama_bgr) {
 
 		if (Czerwony_ROI.size() > 0) {
 
-			Czerwony = *std::max_element(Czerwony_ROI.begin(), Czerwony_ROI.end());
+			Czerwony = *std::min_element(Czerwony_ROI.begin(), Czerwony_ROI.end());
 		}
 
 		if (Zielony_ROI.size() > 0) {
@@ -392,7 +392,7 @@ int main(int argc, char* argv[])
 	{
 		//sklepienie obrazu do matrix.
 		przejmij.read(KanalKamery);
-		cvtColor(KanalKamery, BGR, CV_BGR2Luv);
+		cvtColor(KanalKamery, BGR, CV_RGB2XYZ);
 		zapiszWartosc_BGR(KanalKamery, BGR);
 		//konwersja ramki z BGR do HSV.
 		cvtColor(KanalKamery, HSV, COLOR_BGR2HSV);
