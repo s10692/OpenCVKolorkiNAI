@@ -1,6 +1,7 @@
 #include <sstream>
 #include <string>
 #include <iostream>
+#include <numeric>
 #include <opencv/cv.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -30,7 +31,7 @@ const int Wysokosc_ramy = 480;
 const int Szerokosc_ramy = 640;
 
 //maksymalna liczba obiektów , które maj¹ byæ wykrywane w ramce.
-const int MAX_liczba_obiektow = 200;
+const int MAX_liczba_obiektow = 50;
 //minimalna i maksymalna powierzchnia obiektu.
 const int MIN_powierzchnia_obiektu = 10 * 10;
 const int MAX_powierzchnia_obiektu = Wysokosc_ramy * Szerokosc_ramy / 1.5;   //480 * 426,666
@@ -149,27 +150,32 @@ void NacisnijIPrzeciagnij_prostokat(int zdarzenie, int x, int y, int flagi, void
 			for (int k = prostokatROI.x; k < prostokatROI.x + prostokatROI.width; k++) {
 				for (int p = prostokatROI.y; p < prostokatROI.y + prostokatROI.height; p++) {
 					//zapisanie wartoœci BGR w tym momencie.
-					Czerwony_ROI.push_back((int)rama_bgr.at<cv::Vec3b>(p, k)[0]);
+					Czerwony_ROI.push_back((int)rama_bgr.at<cv::Vec3b>(p, k)[2]);
 					Zielony_ROI.push_back((int)rama_bgr.at<cv::Vec3b>(p, k)[1]);
-					Niebieski_ROI.push_back((int)rama_bgr.at<cv::Vec3b>(p, k)[2]);
+					Niebieski_ROI.push_back((int)rama_bgr.at<cv::Vec3b>(p, k)[0]);
 				}
 			}
 		}
 
 		if (Czerwony_ROI.size() > 0) {
-
-			Czerwony = *std::max_element(Czerwony_ROI.begin(), Czerwony_ROI.end());
+			int red_sum = std::accumulate(Czerwony_ROI.begin(), Czerwony_ROI.end(), 0);
+			int red_avg = red_sum / Czerwony_ROI.size();
+			Czerwony = red_avg;
 		}
 
 		if (Zielony_ROI.size() > 0) {
 
-			Zielony = *std::max_element(Zielony_ROI.begin(), Zielony_ROI.end());
+			int green_sum = std::accumulate(Zielony_ROI.begin(), Zielony_ROI.end(), 0);
+			int green_avg = green_sum / Zielony_ROI.size();
+			Zielony = green_avg;
 
 		}
 
 		if (Niebieski_ROI.size() > 0) {
 
-			Niebieski = *std::max_element(Niebieski_ROI.begin(), Niebieski_ROI.end());
+			int blue_sum = std::accumulate(Niebieski_ROI.begin(), Niebieski_ROI.end(), 0);
+			int blue_avg = blue_sum / Niebieski_ROI.size();
+			Niebieski = blue_avg;
 
 		}
 
@@ -386,8 +392,9 @@ int main(int argc, char* argv[])
 	{
 		//sklepienie obrazu do matrix.
 		przejmij.read(KanalKamery);
-		cvtColor(KanalKamery, BGR, CV_RGB2XYZ);
-		zapiszWartosc_BGR(KanalKamery, BGR);
+		//ustawienie wartoœci BGR
+        BGR = KanalKamery;
+        zapiszWartosc_BGR(KanalKamery, BGR);
 		//konwersja ramki z BGR do HSV.
 		cvtColor(KanalKamery, HSV, COLOR_BGR2HSV);
 		//ustawienie wartoœci HSV z wybranego przez u¿ytkownika regionu.
