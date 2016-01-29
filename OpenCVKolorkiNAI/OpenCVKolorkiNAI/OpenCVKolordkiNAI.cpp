@@ -19,7 +19,8 @@ int Nasycenie_MAX = 256;
 int Wartosc_MIN = 0;
 int Wartosc_MAX = 256;
 
-
+//pocz¹tkowa wartoœæ filtru BGR
+//bêd¹ zmieniane 
 int Czerwony = 0;
 int Zielony = 0;
 int Niebieski = 0;
@@ -136,21 +137,13 @@ void NacisnijIPrzeciagnij_prostokat(int zdarzenie, int x, int y, int flagi, void
 	}
 }
 
-void zapiszWartosc_BGR(cv::Mat rama, cv::Mat rama_bgr) {
-
-	if (Ruszenie_myszy == true) {
-		//je¿eli mysz jest wciœniêta , rysujemy prostok¹t na ekranie i klikniêcie
-		rectangle(rama, Poczatkowe_klikniecie, cv::Point(Obecna_pozycja_myszy.x, Obecna_pozycja_myszy.y), cv::Scalar(0, 255, 0), 1, 8, 0);
-
-	}
+ void zapiszWartosc_BGR(cv::Mat rama, cv::Mat rama_bgr) {
 
 	if (Ruszenie_myszy == false && Prostokat == true) {
 		//czyszczenie poprzednich wartoœci wektora
 		if (Czerwony_ROI.size() > 0) Czerwony_ROI.clear();
 		if (Zielony_ROI.size() > 0) Zielony_ROI.clear();
 		if (Niebieski_ROI.size() > 0) Niebieski_ROI.clear();
-		//je¿eli uzytkownik przeci¹gnie tylko linie to nie znajdzie z wybranego obszaru wysokoœci ani szerokoœci i wyœliwetli b³¹d
-		if (prostokatROI.width < 1 || prostokatROI.height < 1) cout << "Proszê narysowaæ prostok¹t , nie linie " << endl;
 		else {
 			for (int k = prostokatROI.x; k < prostokatROI.x + prostokatROI.width; k++) {
 				for (int p = prostokatROI.y; p < prostokatROI.y + prostokatROI.height; p++) {
@@ -164,7 +157,7 @@ void zapiszWartosc_BGR(cv::Mat rama, cv::Mat rama_bgr) {
 
 		if (Czerwony_ROI.size() > 0) {
 
-			Czerwony = *std::min_element(Czerwony_ROI.begin(), Czerwony_ROI.end());
+			Czerwony = *std::max_element(Czerwony_ROI.begin(), Czerwony_ROI.end());
 		}
 
 		if (Zielony_ROI.size() > 0) {
@@ -182,7 +175,7 @@ void zapiszWartosc_BGR(cv::Mat rama, cv::Mat rama_bgr) {
 	}
 
 
-}
+} 
 
 
 //Zapisanie wartoœci HSV wybranego obszaru do wektora
@@ -201,7 +194,7 @@ void zapiszWartosci_HSV(cv::Mat rama, cv::Mat rama_hsv) {
 		if (Nasycenie_ROI.size() > 0) Nasycenie_ROI.clear();
 		if (Wartosc_ROI.size() > 0) Wartosc_ROI.clear();
 		//je¿eli uzytkownik przeci¹gnie tylko linie to nie znajdzie z wybranego obszaru wysokoœci ani szerokoœci i wyœliwetli b³¹d
-		if (prostokatROI.width < 1 || prostokatROI.height < 1) cout << "Proszê narysowaæ prostok¹t , nie linie " << endl;
+		if (prostokatROI.width < 1 || prostokatROI.height < 1) cout << "Proszê narysowaæ prostok¹t" << endl;
 		else {
 			for (int k = prostokatROI.x; k < prostokatROI.x + prostokatROI.width; k++) {
 				for (int p = prostokatROI.y; p < prostokatROI.y + prostokatROI.height; p++) {
@@ -360,7 +353,7 @@ int main(int argc, char* argv[])
 
 
 	Tryb_kalibracji = true;
-
+	//MAtrix do przechowywania obrazu BGR
 	Mat BGR;
 	//Matrix do przechowywania ka¿dej klatki kamery
 	Mat KanalKamery;
@@ -403,7 +396,7 @@ int main(int argc, char* argv[])
 		//wykonywanie operacji morfologicznych na progowym obrazie w celu wyeliminowania zak³uceñ
 		//i podkreœlaj¹ filtrowany obiekt
 		if (uzyjTransformacjeMorph)
-			SledzenieFiltrowanegoObiektu(x, y, prog, KanalKamery);
+			TransformacjeMorph(prog);
 
 		if (sledzObiekt)
 			SledzenieFiltrowanegoObiektu(x, y, prog, KanalKamery);
@@ -425,10 +418,6 @@ int main(int argc, char* argv[])
 
 		imshow(okno, KanalKamery);
 		//opóŸnienie 30 ms, tak ¿e ekran mo¿na odœwie¿yæ.
-		//Obraz nie pojawi siê bez tego polecenia wait(Key())
-		//u¿ycie polecenia waitKey() aby przechwyciæ dane z klawiatury.
-        
-
 		if (waitKey(30) == 99) Tryb_kalibracji = !Tryb_kalibracji;
 	}
 
