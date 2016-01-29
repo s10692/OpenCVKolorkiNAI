@@ -20,7 +20,7 @@ int Wartosc_MIN = 0;
 int Wartosc_MAX = 256;
 
 //pocz¹tkowa wartoœæ filtru BGR
-//bêd¹ zmieniane 
+
 int Czerwony = 0;
 int Zielony = 0;
 int Niebieski = 0;
@@ -55,6 +55,7 @@ cv::Point Poczatkowe_klikniecie, Obecna_pozycja_myszy;
 cv::Rect prostokatROI;
 //wartoœæ HSV z regionu który wybra³ u¿ytkownik, przechowywane w osobnych wektorach aby by³a mo¿liwoœæ ³atwego ich posortowania
 vector<int> Barwa_ROI, Nasycenie_ROI, Wartosc_ROI;
+//wartoœæ BGR dla kontur œledzonego obiektu
 vector<int> Czerwony_ROI, Zielony_ROI, Niebieski_ROI;
 
 string intNaString(int numer) {
@@ -93,7 +94,7 @@ void NacisnijIPrzeciagnij_prostokat(int zdarzenie, int x, int y, int flagi, void
 	//je¿eli tryb kalibracji jest prawd¹ , bêdziemy korzystaæ z myszy aby zmieniæ wartoœci HSV
 	//je¿eli tryb kalibracji jest fa³szywy , ko¿ystamy z suwaków HSV 
 	if (Tryb_kalibracji = true) {
-		//obs³uga do kana³u wieo jest przekazywana jako parametr i wrzucenie do Mat jako wskaŸnika
+		//obs³uga do kana³u wideo jest przekazywana jako parametr i wrzucenie do Mat jako wskaŸnika
 		Mat* kanalVideo = (Mat*)param;
 
 		if (zdarzenie == CV_EVENT_LBUTTONDOWN && Przeciaganie_myszy == false)
@@ -125,7 +126,7 @@ void NacisnijIPrzeciagnij_prostokat(int zdarzenie, int x, int y, int flagi, void
 		}
 
 		if (zdarzenie == CV_EVENT_RBUTTONDOWN) {
-			//Gdy u¿ytkownik kliknie rawy przycisk myszy 
+			//Gdy u¿ytkownik kliknie prawy przycisk myszy 
 			//Resetuje wartoœci HSV
 			Barwa_MIN = 0;
 			Barwa_MAX = 255;
@@ -136,7 +137,7 @@ void NacisnijIPrzeciagnij_prostokat(int zdarzenie, int x, int y, int flagi, void
 		}
 	}
 }
-
+//Zapisanie wartoœci BGR do rysowania kontur obiektu
  void zapiszWartosc_BGR(cv::Mat rama, cv::Mat rama_bgr) {
 
 	if (Ruszenie_myszy == false && Prostokat == true) {
@@ -184,7 +185,7 @@ void zapiszWartosci_HSV(cv::Mat rama, cv::Mat rama_hsv) {
 
 	if (Ruszenie_myszy == true) {
 		//je¿eli mysz jest wciœniêta , rysujemy prostok¹t na ekranie i klikniêcie
-		rectangle(rama, Poczatkowe_klikniecie, cv::Point(Obecna_pozycja_myszy.x, Obecna_pozycja_myszy.y), cv::Scalar(0, 255, 0), 1, 8, 0);
+		rectangle(rama, Poczatkowe_klikniecie, cv::Point(Obecna_pozycja_myszy.x, Obecna_pozycja_myszy.y), cv::Scalar(0, 0, 255), 1, 8, 0);
 
 	}
 	
@@ -247,7 +248,7 @@ void narysujObiekt(int x, int y, Mat &rama , vector< vector<Point> > kontury, ve
 	
 	//Rysowanie kontur wokó³ wybranego koloru / obiektu
 
-	int max = 0; int i_cont = -1;
+	int max = 0;
 
 	for (int i = 0; i < kontury.size(); i ++)
 		if (abs(contourArea(Mat(kontury[i]))) > max)
